@@ -28,7 +28,7 @@ There is no test runner, linter, or formatter configured yet.
   - `/tasks` → Task manager with filtering, inline editing, and completion
   - `/projects` → Split-pane project board with inline creation
   - `/knowledge` → Obsidian note browser + search + re-index
-  - `/search` → Semantic search (currently mock data)
+  - `/search` → Semantic search via Ollama embeddings
   - `/briefing` → Daily Briefing with stats, lists, and AI summary generation
   - `/review` → Weekly Review assistant (captures, stale tasks, flagged projects)
   - `/google` → Google Integration page (Tasks, Calendar, Drive sync)
@@ -47,6 +47,7 @@ There is no test runner, linter, or formatter configured yet.
   - `OBSIDIAN_VAULT_PATH=../obsidian/Life Organizer`
   - `OLLAMA_HOST=http://localhost:11434`
   - `OLLAMA_MODEL=kimi-k2.6:cloud`
+  - `OLLAMA_EMBED_MODEL=nomic-embed-text`
   - `GOOGLE_CLIENT_ID=...` (for Google OAuth)
   - `GOOGLE_CLIENT_SECRET=...` (for Google OAuth)
   - `GOOGLE_REDIRECT_URI=http://localhost:3001/api/google/callback`
@@ -60,6 +61,7 @@ There is no test runner, linter, or formatter configured yet.
 | `tasks` | Task records (local + Google Tasks sync via `external_id`) |
 | `knowledge_items` | Indexed Obsidian notes with content hashes |
 | `google_credentials` | Stored OAuth tokens for Google integration |
+| `embeddings` | Vector embeddings for semantic search |
 
 ### REST API Endpoints
 
@@ -68,6 +70,7 @@ There is no test runner, linter, or formatter configured yet.
 | `/api/captures` | GET, POST | List/create captures |
 | `/api/captures/:id` | PATCH | Update capture status/classification |
 | `/api/captures/:id/classify` | POST | Run Ollama AI classification |
+| `/api/captures/:id/obsidian-note` | POST | Create Obsidian note from capture |
 | `/api/projects` | GET, POST | List/create projects |
 | `/api/projects/:id` | PATCH | Update project fields |
 | `/api/tasks` | GET, POST | List/create tasks |
@@ -75,6 +78,8 @@ There is no test runner, linter, or formatter configured yet.
 | `/api/knowledge` | GET | List indexed Obsidian notes |
 | `/api/knowledge/index` | POST | Trigger vault re-indexing |
 | `/api/knowledge/search` | GET | Keyword search (`?q=...`) |
+| `/api/search/semantic` | POST | Semantic similarity search via embeddings |
+| `/api/search/embeddings/generate` | POST | (Re)generate embeddings for all items |
 | `/api/briefing/daily` | GET | Daily briefing aggregation |
 | `/api/briefing/daily/ai-summary` | POST | AI-generated daily briefing text |
 | `/api/review/weekly` | GET | Weekly review aggregation |
@@ -129,6 +134,7 @@ backend/
     review.js             # Weekly review aggregation
     tasks.js              # Task CRUD with filtering
     google.js             # Google OAuth, Tasks, Calendar, Drive integration
+    search.js             # Semantic search with embeddings
 ```
 
 ## Obsidian Integration
@@ -161,6 +167,27 @@ The `POST /api/captures/:id/classify` endpoint sends the raw capture text to a l
 
 The Inbox view displays classification results inline and allows manual status override.
 
+## Semantic Search
+
+The system uses the Ollama embeddings API (`/api/embed`) with `nomic-embed-text` (configurable via `OLLAMA_EMBED_MODEL`) to generate vector embeddings for knowledge items and captures. Embeddings are stored as JSON in the `embeddings` table and compared using cosine similarity in JavaScript.
+
+- `POST /api/search/embeddings/generate` — (Re)generate embeddings for all knowledge items and captures.
+- `POST /api/search/semantic` — Accepts a query string and returns ranked results with similarity scores.
+
+The frontend Search view (`/search`) now performs real semantic search against the embeddings instead of using mock data.
+
+## Obsidian Note Creation
+
+Captures can be routed directly into the Obsidian vault as new markdown files. The `POST /api/captures/:id/obsidian-note` endpoint:
+
+- Generates a filename by sanitizing the capture text
+- Creates frontmatter with title, type, area, tags, and metadata referencing the original capture ID
+- Writes the `.md` file to `OBSIDIAN_VAULT_PATH`
+- Upserts the new note into `knowledge_items` for immediate searchability
+- Updates the capture status to `routed` with destination `obsidian`
+
+The Inbox view provides a "Create Note" button for unprocessed captures.
+
 ## Google Integration
 
 The system supports OAuth2-based sync with Google Workspace:
@@ -174,8 +201,6 @@ OAuth tokens are stored in `google_credentials` SQLite table. Auto-refresh handl
 ## Next Steps
 
 See `implementation_plan.md` and `TASKS.md` for the full roadmap. Potential next phases:
-- Semantic search with local embeddings (via Ollama embeddings API)
-- Obsidian note creation from captures
 - Apple Shortcuts workaround for Apple Notes/Reminders
 - Weekly Review AI assistant
 - Deployment strategy

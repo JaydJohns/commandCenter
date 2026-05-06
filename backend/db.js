@@ -70,6 +70,16 @@ db.exec(`
     expiry_date INTEGER,
     scope TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS embeddings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source_type TEXT NOT NULL,
+    source_id INTEGER NOT NULL,
+    embedding TEXT NOT NULL,
+    model TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(source_type, source_id)
+  );
 `);
 
 export default db;

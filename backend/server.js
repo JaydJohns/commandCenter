@@ -9,6 +9,7 @@ import briefingRouter from "./routes/briefing.js";
 import tasksRouter from "./routes/tasks.js";
 import reviewRouter from "./routes/review.js";
 import googleRouter from "./routes/google.js";
+import searchRouter from "./routes/search.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -77,6 +78,7 @@ app.use("/api/briefing", briefingRouter);
 app.use("/api/tasks", tasksRouter);
 app.use("/api/review", reviewRouter);
 app.use("/api/google", googleRouter);
+app.use("/api/search", searchRouter);
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });

@@ -71,6 +71,20 @@ export default function InboxView() {
     }
   };
 
+  const createObsidianNoteFromCapture = async (capture) => {
+    try {
+      const res = await fetch(`${API}/captures/${capture.id}/obsidian-note`, { method: "POST" });
+      if (!res.ok) {
+        const errData = await res.json();
+        console.error("Failed to create Obsidian note:", errData);
+        return;
+      }
+      await fetchCaptures();
+    } catch (err) {
+      console.error("Failed to create Obsidian note from capture", err);
+    }
+  };
+
   const filtered = captures.filter((c) => {
     if (filter === "all") return true;
     return c.status === filter;
@@ -137,14 +151,24 @@ export default function InboxView() {
                     {classifyingId === capture.id ? "Classifying..." : "AI Classify"}
                   </button>
                   {capture.status === "unprocessed" && (
-                    <button
-                      className="tag"
-                      type="button"
-                      onClick={() => createTaskFromCapture(capture)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      Create Task
-                    </button>
+                    <>
+                      <button
+                        className="tag"
+                        type="button"
+                        onClick={() => createTaskFromCapture(capture)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        Create Task
+                      </button>
+                      <button
+                        className="tag"
+                        type="button"
+                        onClick={() => createObsidianNoteFromCapture(capture)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        Create Note
+                      </button>
+                    </>
                   )}
                   {statusOptions
                     .filter((s) => s !== capture.status)

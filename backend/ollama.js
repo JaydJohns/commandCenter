@@ -1,5 +1,34 @@
 const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "kimi-k2.6:cloud";
+const OLLAMA_EMBED_MODEL = process.env.OLLAMA_EMBED_MODEL || "nomic-embed-text";
+
+export async function getEmbedding(text) {
+  try {
+    const res = await fetch(`${OLLAMA_HOST}/api/embed`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: OLLAMA_EMBED_MODEL,
+        input: text.trim()
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error(`Ollama embed HTTP ${res.status}: ${await res.text()}`);
+    }
+
+    const data = await res.json();
+    // Ollama embed API returns embeddings as an array of arrays (one per input)
+    const embedding = data.embeddings?.[0];
+    if (!Array.isArray(embedding)) {
+      throw new Error("Invalid embedding response from Ollama");
+    }
+    return embedding;
+  } catch (err) {
+    console.error("Ollama embedding failed:", err);
+    return null;
+  }
+}
 
 export async function classifyCapture(text) {
   const systemPrompt = `You are an intelligent inbox classifier for a personal knowledge and task management system.

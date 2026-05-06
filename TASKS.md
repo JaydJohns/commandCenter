@@ -121,10 +121,10 @@
 
 ## Next Phases (Pending)
 
-- [ ] **Semantic search with local embeddings** (OB1)
+- [x] **Semantic search with local embeddings** (OB1)
   Use Ollama embeddings API (nomic-embed-text) to generate vector embeddings for knowledge items and captures. Store in SQLite. Add vector similarity search endpoint.
 
-- [ ] **Obsidian note creation from captures**
+- [x] **Obsidian note creation from captures**
   Route a capture directly into a new Obsidian markdown file with AI-generated frontmatter.
 
 - [ ] **Apple Shortcuts workaround**
