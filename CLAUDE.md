@@ -30,7 +30,7 @@ There is no test runner, linter, or formatter configured yet.
   - `/knowledge` → Obsidian note browser + search + re-index
   - `/search` → Semantic search via Ollama embeddings
   - `/briefing` → Daily Briefing with stats, lists, and AI summary generation
-  - `/review` → Weekly Review assistant (captures, stale tasks, flagged projects)
+  - `/review` → Periodic Review assistant (weekly, monthly, quarterly, annual) with AI insights
   - `/google` → Google Integration page (Tasks, Calendar, Drive sync)
   - `/settings` → Configuration cards
 - **State**: React `useState`/`useMemo` only. No external state library.
@@ -82,7 +82,8 @@ There is no test runner, linter, or formatter configured yet.
 | `/api/search/embeddings/generate` | POST | (Re)generate embeddings for all items |
 | `/api/briefing/daily` | GET | Daily briefing aggregation |
 | `/api/briefing/daily/ai-summary` | POST | AI-generated daily briefing text |
-| `/api/review/weekly` | GET | Weekly review aggregation |
+| `/api/review/:period` | GET | Review aggregation (weekly, monthly, quarterly, annual) |
+| `/api/review/:period/ai-insights` | POST | AI-generated review insights |
 | `/api/google/status` | GET | Google OAuth status |
 | `/api/google/auth` | GET | Start OAuth flow |
 | `/api/google/callback` | GET | OAuth callback handler |
@@ -202,5 +203,4 @@ OAuth tokens are stored in `google_credentials` SQLite table. Auto-refresh handl
 
 See `implementation_plan.md` and `TASKS.md` for the full roadmap. Potential next phases:
 - Apple Shortcuts workaround for Apple Notes/Reminders
-- Weekly Review AI assistant
 - Deployment strategy

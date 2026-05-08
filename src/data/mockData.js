@@ -6,7 +6,7 @@ export const navigation = [
   { id: "projects", label: "Projects", eyebrow: "Delivery" },
   { id: "knowledge", label: "Knowledge Base", eyebrow: "Archive" },
   { id: "search", label: "Semantic Search", eyebrow: "Discover" },
-  { id: "review", label: "Weekly Review", eyebrow: "Reflect" },
+  { id: "review", label: "Review", eyebrow: "Reflect" },
   { id: "google", label: "Google Integration", eyebrow: "Connect" },
   { id: "settings", label: "Settings", eyebrow: "System" }
 ];

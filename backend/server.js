@@ -1,6 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 import db from "./db.js";
 import capturesRouter from "./routes/captures.js";
 import projectsRouter from "./routes/projects.js";
@@ -10,6 +12,9 @@ import tasksRouter from "./routes/tasks.js";
 import reviewRouter from "./routes/review.js";
 import googleRouter from "./routes/google.js";
 import searchRouter from "./routes/search.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -82,6 +87,18 @@ app.use("/api/search", searchRouter);
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
+});
+
+// Serve frontend in production
+const distPath = path.join(__dirname, "../dist");
+app.use(express.static(distPath));
+
+app.get("*", (req, res) => {
+  if (!req.path.startsWith("/api")) {
+    res.sendFile(path.join(distPath, "index.html"));
+  } else {
+    res.status(404).json({ error: "API endpoint not found" });
+  }
 });
 
 app.listen(PORT, () => {

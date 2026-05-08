@@ -10,7 +10,7 @@ import SettingsView from "./views/SettingsView";
 import InboxView from "./views/InboxView";
 import DailyBriefingView from "./views/DailyBriefingView";
 import TasksView from "./views/TasksView";
-import WeeklyReviewView from "./views/WeeklyReviewView";
+import ReviewView from "./views/ReviewView";
 import GoogleView from "./views/GoogleView";
 import { projects, settingsGroups } from "./data/mockData";
 
@@ -44,7 +44,7 @@ function App() {
           <Route path="/inbox" element={<InboxView />} />
           <Route path="/tasks" element={<TasksView />} />
           <Route path="/briefing" element={<DailyBriefingView />} />
-          <Route path="/review" element={<WeeklyReviewView />} />
+          <Route path="/review" element={<ReviewView />} />
           <Route path="/google" element={<GoogleView />} />
         </Routes>
       </main>

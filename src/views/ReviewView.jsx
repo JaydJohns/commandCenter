@@ -2,46 +2,52 @@ import { useEffect, useState } from "react";
 import MetricCard from "../components/MetricCard";
 
 const API = import.meta.env.VITE_API_BASE_URL || "/api";
+const PERIODS = [
+  { key: "weekly", label: "Weekly" },
+  { key: "monthly", label: "Monthly" },
+  { key: "quarterly", label: "Quarterly" },
+  { key: "annual", label: "Annual" }
+];
 
-export default function WeeklyReviewView() {
+export default function ReviewView() {
+  const [period, setPeriod] = useState("weekly");
   const [review, setReview] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [insights, setInsights] = useState("");
+  const [insightsLoading, setInsightsLoading] = useState(false);
 
-  const fetchReview = async () => {
+  const fetchReview = async (p) => {
+    setLoading(true);
+    setInsights("");
     try {
-      const res = await fetch(`${API}/review/weekly`);
+      const res = await fetch(`${API}/review/${p}`);
       const data = await res.json();
       setReview(data);
     } catch (err) {
-      console.error("Failed to fetch weekly review", err);
+      console.error("Failed to fetch review", err);
+      setReview(null);
     } finally {
       setLoading(false);
     }
   };
 
+  const generateInsights = async () => {
+    setInsightsLoading(true);
+    try {
+      const res = await fetch(`${API}/review/${period}/ai-insights`, { method: "POST" });
+      const data = await res.json();
+      setInsights(data.insights || "No insights generated.");
+    } catch (err) {
+      console.error("Failed to generate insights", err);
+      setInsights("Failed to generate insights.");
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchReview();
-  }, []);
-
-  if (loading) {
-    return (
-      <section className="view-grid">
-        <div className="card">
-          <p>Loading weekly review...</p>
-        </div>
-      </section>
-    );
-  }
-
-  if (!review) {
-    return (
-      <section className="view-grid">
-        <div className="card">
-          <p>Failed to load weekly review.</p>
-        </div>
-      </section>
-    );
-  }
+    fetchReview(period);
+  }, [period]);
 
   const captureStatusColor = (status) => {
     switch (status) {
@@ -53,33 +59,104 @@ export default function WeeklyReviewView() {
     }
   };
 
+  if (loading) {
+    return (
+      <section className="view-grid">
+        <div className="card">
+          <p>Loading {PERIODS.find((p) => p.key === period)?.label.toLowerCase()} review...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (!review) {
+    return (
+      <section className="view-grid">
+        <div className="card">
+          <p>Failed to load review.</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="view-grid">
       {/* Header */}
       <div className="hero-card card">
         <div>
-          <div className="eyebrow">Weekly Review</div>
+          <div className="eyebrow">{review.periodLabel} Review</div>
           <h3>{review.date}</h3>
-          <p>Review captures, tasks, and projects from {review.weekStart} to today.</p>
+          <p>Reviewing activity from {review.since} to today.</p>
         </div>
-        <div className="hero-card__actions">
-          <button className="button button--primary" type="button" onClick={fetchReview}>
-            Refresh Review
+        <div className="hero-card__actions" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+          {PERIODS.map((p) => (
+            <button
+              key={p.key}
+              className={`button ${period === p.key ? "button--primary" : ""}`}
+              type="button"
+              onClick={() => setPeriod(p.key)}
+            >
+              {p.label}
+            </button>
+          ))}
+          <button className="button button--primary" type="button" onClick={() => fetchReview(period)}>
+            Refresh
           </button>
         </div>
+      </div>
+
+      {/* AI Insights */}
+      <div className="card">
+        <div className="section-heading">
+          <div>
+            <div className="eyebrow">AI Assistant</div>
+            <h4>{review.periodLabel} Insights</h4>
+          </div>
+          <button
+            className="button button--primary"
+            type="button"
+            onClick={generateInsights}
+            disabled={insightsLoading}
+          >
+            {insightsLoading ? "Generating..." : "Generate Insights"}
+          </button>
+        </div>
+        {insights && (
+          <div
+            style={{
+              whiteSpace: "pre-wrap",
+              lineHeight: 1.6,
+              marginTop: "1rem",
+              padding: "1rem",
+              borderRadius: "8px",
+              background: "var(--surface-2)",
+              border: "1px solid var(--outline)"
+            }}
+          >
+            {insights}
+          </div>
+        )}
+        {!insights && !insightsLoading && (
+          <p className="meta-note">Click "Generate Insights" to get AI-powered analysis of your {review.periodLabel.toLowerCase()}.</p>
+        )}
       </div>
 
       {/* Stats */}
       <div className="stats-grid">
         <MetricCard
-          label="Captures this week"
-          value={String(review.stats.totalCapturesWeek).padStart(2, "0")}
+          label={`Captures this ${review.periodLabel.toLowerCase()}`}
+          value={String(review.stats.totalCapturesPeriod).padStart(2, "0")}
           detail={`${review.stats.unprocessedCaptures} unprocessed`}
         />
         <MetricCard
           label="Open tasks"
           value={String(review.stats.totalOpenTasks).padStart(2, "0")}
           detail={`${review.stats.staleTasks} need attention`}
+        />
+        <MetricCard
+          label="Completed tasks"
+          value={String(review.stats.completedTasks).padStart(2, "0")}
+          detail={`this ${review.periodLabel.toLowerCase()}`}
         />
         <MetricCard
           label="Active projects"
@@ -91,6 +168,11 @@ export default function WeeklyReviewView() {
           value={String(review.stats.projectsNeedingReview).padStart(2, "0")}
           detail="projects flagged"
         />
+        <MetricCard
+          label="Notes indexed"
+          value={String(review.stats.recentNotes).padStart(2, "0")}
+          detail={`of ${review.stats.totalNotes} total`}
+        />
       </div>
 
       {/* Recent Captures */}
@@ -99,7 +181,7 @@ export default function WeeklyReviewView() {
           <div className="section-heading">
             <div>
               <div className="eyebrow">Inbox</div>
-              <h4>Captures This Week</h4>
+              <h4>Captures This {review.periodLabel}</h4>
             </div>
           </div>
           <div className="capture-log">
@@ -118,6 +200,30 @@ export default function WeeklyReviewView() {
                     ))}
                   </div>
                 )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Completed Tasks */}
+      {review.completedTasks.length > 0 && (
+        <div className="card">
+          <div className="section-heading">
+            <div>
+              <div className="eyebrow">Wins</div>
+              <h4>Completed Tasks</h4>
+            </div>
+          </div>
+          <div className="capture-log">
+            {review.completedTasks.map((task) => (
+              <div className="capture-log__item" key={task.id}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem" }}>
+                  <span>{task.title}</span>
+                  <div className="tag-list">
+                    <span className="status-tag completed">completed</span>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -199,6 +305,31 @@ export default function WeeklyReviewView() {
                 <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem" }}>
                   <span>{capture.raw_text}</span>
                   <span className={`status-tag ${captureStatusColor(capture.status)}`}>{capture.status}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recent Notes */}
+      {review.recentNotes.length > 0 && (
+        <div className="card">
+          <div className="section-heading">
+            <div>
+              <div className="eyebrow">Knowledge</div>
+              <h4>Recently Indexed Notes</h4>
+            </div>
+          </div>
+          <div className="mini-list">
+            {review.recentNotes.map((note) => (
+              <div className="mini-list__item" key={note.id}>
+                <strong>{note.title}</strong>
+                <p>{note.summary || "No preview available."}</p>
+                <div className="tag-list" style={{ marginTop: "0.25rem" }}>
+                  {Array.isArray(note.tags) && note.tags.map((tag) => (
+                    <span className="tag" key={tag}>{tag}</span>
+                  ))}
                 </div>
               </div>
             ))}
