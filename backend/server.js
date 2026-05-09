@@ -23,7 +23,7 @@ function seed() {
   const count = db.prepare("SELECT COUNT(*) as count FROM projects").get().count;
   if (count === 0) {
     const stmt = db.prepare(
-      "INSERT INTO projects (name, owner, status, health, progress, due, summary, milestones) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO projects (name, owner, status, health, progress, due, summary, milestones, area) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     stmt.run(
       "Command Center MVP",
@@ -37,7 +37,8 @@ function seed() {
         { name: "Prototype shell", done: true },
         { name: "Mock data flows", done: true },
         { name: "Search interactions", done: false }
-      ])
+      ]),
+      "LLM Experiments"
     );
     stmt.run(
       "Knowledge Ingestion Pipeline",
@@ -51,7 +52,8 @@ function seed() {
         { name: "Source schema review", done: true },
         { name: "Chunking strategy", done: false },
         { name: "Embeddings experiment", done: false }
-      ])
+      ]),
+      "UX Research Lab"
     );
     stmt.run(
       "Course Builder Alpha",
@@ -65,7 +67,8 @@ function seed() {
         { name: "Template inventory", done: true },
         { name: "Assessment flow", done: false },
         { name: "Analytics surface", done: false }
-      ])
+      ]),
+      "PFW Teaching"
     );
     console.log("Seeded initial projects");
   }

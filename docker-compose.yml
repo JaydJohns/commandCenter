@@ -26,7 +26,7 @@ services:
       
       # Map your local Obsidian Vault into the container at /obsidian
       # Modify the left side to point to your actual local vault path
-      - ../obsidian/Life Organizer:/obsidian
+      - ./obsidian/Life Organizer:/obsidian
     
     # Required for host.docker.internal to work on some Linux/Docker versions
     extra_hosts:

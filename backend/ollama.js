@@ -1,3 +1,5 @@
+import db from "./db.js";
+
 const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "kimi-k2.6:cloud";
 const OLLAMA_EMBED_MODEL = process.env.OLLAMA_EMBED_MODEL || "nomic-embed-text";
@@ -31,11 +33,20 @@ export async function getEmbedding(text) {
 }
 
 export async function classifyCapture(text) {
+  let allAreas = ["PFW Teaching", "Bellon Branch", "Olde Oak Tree", "UX Research Lab", "Learning & Development", "LLM Experiments", "PFW Campus Service", "Home & DIY", "Relationships", "Finance", "General"];
+  try {
+    const rows = db.prepare("SELECT DISTINCT area FROM projects WHERE area IS NOT NULL").all();
+    const dynamicAreas = rows.map(r => r.area);
+    allAreas = [...new Set([...allAreas, ...dynamicAreas])];
+  } catch (err) {
+    // Fallback if db not ready
+  }
+
   const systemPrompt = `You are an intelligent inbox classifier for a personal knowledge and task management system.
 
 Analyze the user's raw capture text and return a structured JSON object with these fields:
 - type: one of [task, project, note, meeting, event, waiting, reference, idea, archive]
-- area: one of [PFW Teaching, Bellon Branch, Olde Oak Tree, UX Research Lab, Learning & Development, LLM Experiments, n8n Workflows, Home & DIY, Relationships, Finance, or General]
+- area: one of [${allAreas.join(", ")}]
 - project: the related project name if inferred, else null
 - next_action: a concise next step if this is a task, else null
 - tags: array of relevant lowercase tags (e.g., ["teaching", "urgent"])

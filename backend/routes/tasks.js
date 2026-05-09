@@ -24,21 +24,23 @@ router.get("/", (req, res) => {
 });
 
 router.post("/", (req, res) => {
-  const { title, project_id, due_date, priority, status } = req.body;
+  const { title, project_id, due_date, priority, status, parent_id, notes } = req.body;
   if (!title || !title.trim()) {
     return res.status(400).json({ error: "title is required" });
   }
 
   const result = db
     .prepare(
-      "INSERT INTO tasks (title, project_id, due_date, priority, status) VALUES (?, ?, ?, ?, ?)"
+      "INSERT INTO tasks (title, project_id, due_date, priority, status, parent_id, notes) VALUES (?, ?, ?, ?, ?, ?, ?)"
     )
     .run(
       title.trim(),
       project_id || null,
       due_date || null,
       priority || "medium",
-      status || "open"
+      status || "open",
+      parent_id || null,
+      notes || null
     );
 
   const row = db.prepare("SELECT * FROM tasks WHERE id = ?").get(result.lastInsertRowid);
@@ -49,7 +51,7 @@ router.patch("/:id", (req, res) => {
   const { id } = req.params;
   const updates = req.body;
 
-  const allowed = ["title", "project_id", "due_date", "status", "priority", "external_id", "source"];
+  const allowed = ["title", "project_id", "due_date", "status", "priority", "external_id", "source", "parent_id", "notes"];
   const fields = [];
   const values = [];
 

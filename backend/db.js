@@ -42,6 +42,8 @@ db.exec(`
     source TEXT DEFAULT 'local',
     external_id TEXT,
     project_id INTEGER,
+    parent_id INTEGER,
+    notes TEXT,
     due_date DATE,
     status TEXT DEFAULT 'open',
     priority TEXT DEFAULT 'medium',
@@ -81,5 +83,8 @@ db.exec(`
     UNIQUE(source_type, source_id)
   );
 `);
+
+try { db.exec("ALTER TABLE tasks ADD COLUMN parent_id INTEGER"); } catch (e) { /* ignores if column already exists */ }
+try { db.exec("ALTER TABLE tasks ADD COLUMN notes TEXT"); } catch (e) { /* ignores if column already exists */ }
 
 export default db;
